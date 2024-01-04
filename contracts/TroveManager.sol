@@ -10,8 +10,7 @@ import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
-import "./Dependencies/console.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "./Dependencies/Initializable.sol";
 
 contract TroveManager is LiquityBase, OwnableUpgradeable, CheckContract, ITroveManager, Initializable {
     string constant public NAME = "TroveManager";
@@ -219,6 +218,10 @@ contract TroveManager is LiquityBase, OwnableUpgradeable, CheckContract, ITroveM
         liquidateInNormalMode,
         liquidateInRecoveryMode,
         redeemCollateral
+    }
+
+    constructor() public {
+        _disableInitializers();
     }
 
     function initialize() initializer external {

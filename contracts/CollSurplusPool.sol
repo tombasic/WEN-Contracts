@@ -31,6 +31,7 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
 
     event CollBalanceUpdated(address indexed _account, uint _newBalance);
     event EtherSent(address _to, uint _amount);
+    event CollSurplusPoolETHBalanceUpdated(uint _ETH);
     
     // --- Contract setters ---
 
@@ -118,5 +119,6 @@ contract CollSurplusPool is Ownable, CheckContract, ICollSurplusPool {
     receive() external payable {
         _requireCallerIsActivePool();
         ETH = ETH.add(msg.value);
+        emit CollSurplusPoolETHBalanceUpdated(ETH);
     }
 }

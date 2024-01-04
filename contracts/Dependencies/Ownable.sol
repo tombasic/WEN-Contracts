@@ -16,8 +16,10 @@ pragma solidity 0.6.11;
  */
 contract Ownable {
     address private _owner;
+    address private _pendingOwner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
@@ -25,6 +27,13 @@ contract Ownable {
     constructor () internal {
         _owner = msg.sender;
         emit OwnershipTransferred(address(0), msg.sender);
+    }
+
+    /**
+     * @dev Returns the address of the pending owner.
+     */
+    function pendingOwner() public view virtual returns (address) {
+        return _pendingOwner;
     }
 
     /**
@@ -62,5 +71,49 @@ contract Ownable {
     function _renounceOwnership() internal {
         emit OwnershipTransferred(_owner, address(0));
         _owner = address(0);
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        _renounceOwnership();
+    }
+
+    /**
+     * @dev Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one.
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        _pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner(), newOwner);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`) and deletes any pending owner.
+     * Internal function without access restriction.
+     */
+    function _transferOwnership(address newOwner) internal virtual {
+        delete _pendingOwner;
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+
+    /**
+     * @dev The new owner accepts the ownership transfer.
+     */
+    function acceptOwnership() external {
+        address sender = _msgSender();
+        require(pendingOwner() == sender, "Ownable2Step: caller is not the new owner");
+        _transferOwnership(sender);
+    }
+
+    function _msgSender() private view returns (address) {
+        return msg.sender;
     }
 }

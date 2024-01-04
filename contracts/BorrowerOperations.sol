@@ -10,8 +10,7 @@ import "./Interfaces/ISortedTroves.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/OwnableUpgradeable.sol";
 import "./Dependencies/CheckContract.sol";
-import "./Dependencies/console.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "./Dependencies/Initializable.sol";
 
 contract BorrowerOperations is LiquityBase, OwnableUpgradeable, CheckContract, Initializable, IBorrowerOperations {
     string constant public NAME = "BorrowerOperations";
@@ -92,6 +91,10 @@ contract BorrowerOperations is LiquityBase, OwnableUpgradeable, CheckContract, I
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint stake, BorrowerOperation operation);
     event LUSDBorrowingFeePaid(address indexed _borrower, uint _LUSDFee);
     
+    constructor() public {
+        _disableInitializers();
+    }
+
     function initialize() initializer external {
         __Ownable_init();
     }

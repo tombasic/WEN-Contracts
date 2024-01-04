@@ -18,10 +18,10 @@ import "./Dependencies/console.sol";
 * --- Functionality added specific to the LUSDToken ---
 * 
 * 1) Transfer protection: blacklist of addresses that are invalid recipients (i.e. core Liquity contracts) in external 
-* transfer() and transferFrom() calls. The purpose is to protect users from losing tokens by mistakenly sending LUSD directly to a Liquity 
+* transfer() and transferFrom() calls. The purpose is to protect users from losing tokens by mistakenly sending WEN directly to a Liquity 
 * core contract, when they should rather call the right function. 
 *
-* 2) sendToPool() and returnFromPool(): functions callable only Liquity core contracts, which move LUSD tokens between Liquity <-> user.
+* 2) sendToPool() and returnFromPool(): functions callable only Liquity core contracts, which move WEN tokens between Liquity <-> user.
 */
 
 contract LUSDToken is CheckContract, ILUSDToken {
@@ -50,7 +50,7 @@ contract LUSDToken is CheckContract, ILUSDToken {
     
     mapping (address => uint256) private _nonces;
     
-    // User data for LUSD token
+    // User data for WEN token
     mapping (address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowances;  
     
@@ -181,13 +181,13 @@ contract LUSDToken is CheckContract, ILUSDToken {
         external 
         override 
     {            
-        require(deadline >= now, 'LUSD: expired deadline');
+        require(deadline >= now, 'WEN: expired deadline');
         bytes32 digest = keccak256(abi.encodePacked('\x19\x01', 
                          domainSeparator(), keccak256(abi.encode(
                          _PERMIT_TYPEHASH, owner, spender, amount, 
                          _nonces[owner]++, deadline))));
         address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress == owner, 'LUSD: invalid signature');
+        require(recoveredAddress == owner, 'WEN: invalid signature');
         _approve(owner, spender, amount);
     }
 
@@ -249,18 +249,18 @@ contract LUSDToken is CheckContract, ILUSDToken {
         require(
             _recipient != address(0) && 
             _recipient != address(this),
-            "LUSD: Cannot transfer tokens directly to the LUSD token contract or the zero address"
+            "WEN: Cannot transfer tokens directly to the WEN token contract or the zero address"
         );
         require(
             _recipient != stabilityPoolAddress && 
             _recipient != troveManagerAddress && 
             _recipient != borrowerOperationsAddress, 
-            "LUSD: Cannot transfer tokens directly to the StabilityPool, TroveManager or BorrowerOps"
+            "WEN: Cannot transfer tokens directly to the StabilityPool, TroveManager or BorrowerOps"
         );
     }
 
     function _requireCallerIsBorrowerOperations() internal view {
-        require(msg.sender == borrowerOperationsAddress, "LUSDToken: Caller is not BorrowerOperations");
+        require(msg.sender == borrowerOperationsAddress, "WEN: Caller is not BorrowerOperations");
     }
 
     function _requireCallerIsBOorTroveMorSP() internal view {
@@ -268,18 +268,18 @@ contract LUSDToken is CheckContract, ILUSDToken {
             msg.sender == borrowerOperationsAddress ||
             msg.sender == troveManagerAddress ||
             msg.sender == stabilityPoolAddress,
-            "LUSD: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
+            "WEN: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
         );
     }
 
     function _requireCallerIsStabilityPool() internal view {
-        require(msg.sender == stabilityPoolAddress, "LUSD: Caller is not the StabilityPool");
+        require(msg.sender == stabilityPoolAddress, "WEN: Caller is not the StabilityPool");
     }
 
     function _requireCallerIsTroveMorSP() internal view {
         require(
             msg.sender == troveManagerAddress || msg.sender == stabilityPoolAddress,
-            "LUSD: Caller is neither TroveManager nor StabilityPool");
+            "WEN: Caller is neither TroveManager nor StabilityPool");
     }
 
     // --- Optional functions ---

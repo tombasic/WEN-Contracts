@@ -6,6 +6,9 @@ import "./Interfaces/ILUSDToken.sol";
 import "./Dependencies/SafeMath.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/console.sol";
+import "./Dependencies/Initializable.sol";
+import "./Dependencies/OwnableUpgradeable.sol";
+
 /*
 *
 * Based upon OpenZeppelin's ERC20 contract:
@@ -24,12 +27,12 @@ import "./Dependencies/console.sol";
 * 2) sendToPool() and returnFromPool(): functions callable only Liquity core contracts, which move WEN tokens between Liquity <-> user.
 */
 
-contract LUSDToken is CheckContract, ILUSDToken {
+contract LUSDToken is CheckContract, ILUSDToken, OwnableUpgradeable, Initializable {
     using SafeMath for uint256;
     
     uint256 private _totalSupply;
-    string constant internal _NAME = "WEN";
-    string constant internal _SYMBOL = "WEN";
+    string constant internal _NAME = "HP";
+    string constant internal _SYMBOL = "HP";
     string constant internal _VERSION = "1";
     uint8 constant internal _DECIMALS = 18;
     
@@ -42,11 +45,11 @@ contract LUSDToken is CheckContract, ILUSDToken {
 
     // Cache the domain separator as an immutable value, but also store the chain id that it corresponds to, in order to
     // invalidate the cached domain separator if the chain id changes.
-    bytes32 private immutable _CACHED_DOMAIN_SEPARATOR;
-    uint256 private immutable _CACHED_CHAIN_ID;
+    bytes32 private _CACHED_DOMAIN_SEPARATOR;
+    uint256 private _CACHED_CHAIN_ID;
 
-    bytes32 private immutable _HASHED_NAME;
-    bytes32 private immutable _HASHED_VERSION;
+    bytes32 private _HASHED_NAME;
+    bytes32 private _HASHED_VERSION;
     
     mapping (address => uint256) private _nonces;
     
@@ -55,23 +58,22 @@ contract LUSDToken is CheckContract, ILUSDToken {
     mapping (address => mapping (address => uint256)) private _allowances;  
     
     // --- Addresses ---
-    address public immutable troveManagerAddress;
-    address public immutable stabilityPoolAddress;
-    address public immutable borrowerOperationsAddress;
+    address public troveManagerAddress;
+    address public stabilityPoolAddress;
+    address public borrowerOperationsAddress;
     
     // --- Events ---
     event TroveManagerAddressChanged(address _troveManagerAddress);
     event StabilityPoolAddressChanged(address _newStabilityPoolAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
 
-    constructor
-    ( 
-        address _troveManagerAddress,
-        address _stabilityPoolAddress,
-        address _borrowerOperationsAddress
-    ) 
-        public 
-    {  
+
+    constructor() public {
+        _disableInitializers();
+    }
+
+    function initialize( address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress) initializer external {
+        __Ownable_init();
         checkContract(_troveManagerAddress);
         checkContract(_stabilityPoolAddress);
         checkContract(_borrowerOperationsAddress);
@@ -212,7 +214,9 @@ contract LUSDToken is CheckContract, ILUSDToken {
 
     function _transfer(address sender, address recipient, uint256 amount) internal {
         assert(sender != address(0));
-        assert(recipient != address(0));
+        if (recipient == address(0)) {
+            _burn(sender, amount);
+        }
 
         _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
         _balances[recipient] = _balances[recipient].add(amount);
@@ -247,9 +251,8 @@ contract LUSDToken is CheckContract, ILUSDToken {
 
     function _requireValidRecipient(address _recipient) internal view {
         require(
-            _recipient != address(0) && 
             _recipient != address(this),
-            "WEN: Cannot transfer tokens directly to the WEN token contract or the zero address"
+            "WEN: Cannot transfer tokens directly to the WEN token contract"
         );
         require(
             _recipient != stabilityPoolAddress && 
